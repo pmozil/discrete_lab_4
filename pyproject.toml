@@ -1,0 +1,16 @@
+[tool.poetry]
+name = "discrete-lab-4"
+version = "0.1.0"
+description = "The package containing the LZ77, LZW, Hoffmann and Deflate coding algorithms"
+authors = ["Petro Mozil <mozil.petryk@gmail.com>"]
+license = "WTFPL"
+readme = "README.md"
+packages = [{include = "src/coding"}]
+
+[tool.poetry.dependencies]
+python = "^3.10"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
