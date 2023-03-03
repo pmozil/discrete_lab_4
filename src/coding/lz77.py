@@ -2,11 +2,11 @@
 The lz77 encoder/decoder module
 """
 from collections.abc import Sequence
-from typing import Sequence
+from typing import Any
 from base_encoder import BaseDecoder, BaseEncoder
 
 
-class LZ77Encoder(BaseEncoder):
+class LZ7Encoder(BaseEncoder):
     """
     The lz77 Encoder
     """
@@ -16,9 +16,9 @@ class LZ77Encoder(BaseEncoder):
         The init for the lz77 encoder
         """
         self._buffer_len = buffer_len
-        self._buffer = ""
+        self._buffer = []
 
-    def longest_sequence(self, stream: str) -> tuple[int, int]:
+    def longest_sequence(self, stream: Sequence) -> tuple[int, int]:
         """
         Get longest sequence from the buffer
         """
@@ -27,11 +27,11 @@ class LZ77Encoder(BaseEncoder):
         buf_idx = 0
         result_idx = 0
         while (buf_idx + cur_len) < (len(self._buffer)):
-            if stream[:cur_len] == self._buffer[buf_idx : (buf_idx + cur_len)]:
+            if [ch for ch in stream[:cur_len]] == self._buffer[buf_idx : (buf_idx + cur_len)]:
                 match = True
                 result_idx = buf_idx
                 if (
-                    stream[: cur_len + 1]
+                    [ch for ch in stream[: cur_len + 1]]
                     == self._buffer[buf_idx : (buf_idx + cur_len + 1)]
                 ):
                     cur_len += 1
@@ -41,7 +41,7 @@ class LZ77Encoder(BaseEncoder):
                 buf_idx += 1
         return (result_idx, cur_len) if match else (0, 0)
 
-    def encode(self, stream: str) -> Sequence:
+    def encode(self, stream: Sequence) -> Sequence:
         """
         Encode the given stream
 
@@ -51,8 +51,8 @@ class LZ77Encoder(BaseEncoder):
         Returns:
             Sequence - the encoded data
         """
-        self._buffer = ""
-        encoded_stream: Sequence[tuple[int, int, str]] = []
+        self._buffer = []
+        encoded_stream: Sequence[tuple[int, int, Any]] = []
         while stream:
             compression_info: tuple[int, int] = self.longest_sequence(stream)
             if compression_info[1] > 0:
@@ -79,12 +79,19 @@ class LZ77Decoder(BaseDecoder):
     """
 
     @staticmethod
-    def decode(encoded_stream: Sequence[tuple[int, int, str]]) -> str:
+    def decode(encoded_stream: Sequence[tuple[int, int, str]]) -> Sequence:
         """
         Decode the LZ77-compressed stream
         """
-        decoded_stream = ""
+        decoded_stream = []
         for idx, step, char in encoded_stream:
-            decoded_stream += decoded_stream[idx:][:step] + char
+            decoded_stream += decoded_stream[idx:][:step] + [char]
 
         return decoded_stream
+
+enc = LZ7Encoder(5)
+string = "aaabcaab"
+res = enc.encode(string)
+print(res)
+dec = LZ77Decoder()
+print(dec.decode(res))
