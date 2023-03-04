@@ -3,12 +3,15 @@ The lz77 encoder/decoder module
 """
 from collections.abc import Sequence
 from typing import Any
-from base_encoder import BaseDecoder, BaseEncoder
+from base_encoder import BaseCompressor, BaseDecoder, BaseEncoder
 
 
-class LZ7Encoder(BaseEncoder):
+class LZ77Encoder(BaseEncoder):
     """
     The lz77 Encoder
+
+    Mathods:
+        encode(stream: Sequence): encodes the stream with lz77
     """
 
     def __init__(self, buffer_len: int = 128):
@@ -18,7 +21,7 @@ class LZ7Encoder(BaseEncoder):
         self._buffer_len = buffer_len
         self._buffer = []
 
-    def longest_sequence(self, stream: Sequence) -> tuple[int, int]:
+    def _longest_sequence(self, stream: Sequence) -> tuple[int, int]:
         """
         Get longest sequence from the buffer
         """
@@ -54,7 +57,7 @@ class LZ7Encoder(BaseEncoder):
         self._buffer = []
         encoded_stream: Sequence[tuple[int, int, Any]] = []
         while stream:
-            compression_info: tuple[int, int] = self.longest_sequence(stream)
+            compression_info: tuple[int, int] = self._longest_sequence(stream)
             if compression_info[1] > 0:
                 dist = compression_info[0] - len(self._buffer)
                 step = compression_info[1]
@@ -76,6 +79,9 @@ class LZ7Encoder(BaseEncoder):
 class LZ77Decoder(BaseDecoder):
     """
     The LZ77 decoder class
+
+    Methods:
+        decode(encoded_stream: Sequence) - decodes the lz77 code
     """
 
     @staticmethod
@@ -85,13 +91,44 @@ class LZ77Decoder(BaseDecoder):
         """
         decoded_stream = []
         for idx, step, char in encoded_stream:
-            decoded_stream += decoded_stream[idx:][:step] + [char]
+            decoded_stream += decoded_stream[idx:][:step] + ([char] if char else [])
 
         return decoded_stream
 
-enc = LZ7Encoder(5)
+class LZ77Compressor(BaseCompressor):
+    """
+    The lz77 compressor
+
+    Attributes:
+        data - the data thet the compress stores.
+            It is stored compressed and it is decoded on using the property
+    """
+    def __init__(self, buffer_len: int = 128):
+        """
+        Init method for the LZ77Compressor
+        """
+        self._encoder = LZ77Encoder(buffer_len)
+        self._decoder = LZ77Decoder()
+        self._data = []
+
+    @property
+    def data(self) -> Sequence:
+        """
+        Getter for the stored data
+
+        Returns:
+            Sequence - the decoded data
+        """
+        return self._decoder.decode(self._data)
+    
+    @data.setter
+    def data(self, data: Sequence):
+        """
+        Setter for the stored data
+        """
+        self._data = self._encoder.encode(data)
+
+lz77 = LZ77Compressor(5)
 string = "aaabcaab"
-res = enc.encode(string)
-print(res)
-dec = LZ77Decoder()
-print(dec.decode(res))
+lz77.data = string
+print(string, lz77.data)
