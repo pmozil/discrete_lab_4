@@ -55,24 +55,24 @@ class LZ77Encoder(BaseEncoder):
             Sequence - the encoded data
         """
         self._buffer = []
-        encoded_stream: Sequence[tuple[int, int, Any]] = []
+        encoded_stream: Sequence[tuple[int, int] | Any] = []
         while stream:
             compression_info: tuple[int, int] = self._longest_sequence(stream)
             if compression_info[1] > 0:
                 dist = compression_info[0] - len(self._buffer)
                 step = compression_info[1]
                 char = stream[step: step+1]
+                encoded_stream.append((dist, step))
             else:
-                dist = 0
-                step = 0
+                step = 1
                 char = stream[0]
-            encoded_stream.append((dist, step, char))
-            self._buffer += stream[: step + 1]
+                encoded_stream.append(char)
+            self._buffer += stream[: step]
             min_index = len(self._buffer) - self._buffer_len - 1 \
                 if len(self._buffer) > self._buffer_len\
                 else 0
             self._buffer = self._buffer[min_index:]
-            stream = stream[step + 1 :]
+            stream = stream[step:]
         return encoded_stream
 
 
@@ -90,8 +90,11 @@ class LZ77Decoder(BaseDecoder):
         Decode the LZ77-compressed stream
         """
         decoded_stream = []
-        for idx, step, char in encoded_stream:
-            decoded_stream += decoded_stream[idx:][:step] + ([char] if char else [])
+        for char in encoded_stream:
+            if isinstance(char, tuple):
+                decoded_stream += decoded_stream[char[0]:][:char[1]] 
+            else:
+                decoded_stream += [char] if char else []
 
         return decoded_stream
 
@@ -128,7 +131,8 @@ class LZ77Compressor(BaseCompressor):
         """
         self._data = self._encoder.encode(data)
 
-lz77 = LZ77Compressor(5)
-string = "aaabcaab"
-lz77.data = string
-print(string, lz77.data)
+# import sys
+# lz77 = LZ77Compressor(5)
+# lz77.data = string
+# print(sys.getsizeof(lz77._data))
+# print(sys.getsizeof(string))
