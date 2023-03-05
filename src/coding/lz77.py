@@ -42,7 +42,7 @@ class LZ77Encoder(BaseEncoder):
                     buf_idx += 1
             else:
                 buf_idx += 1
-        return (result_idx, cur_len) if match else (0, 0)
+        return (result_idx, cur_len) if match  and cur_len >= 3 else (0, 0)
 
     def encode(self, stream: Sequence) -> Sequence:
         """
