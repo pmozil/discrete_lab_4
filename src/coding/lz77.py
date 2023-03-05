@@ -3,6 +3,7 @@ The lz77 encoder/decoder module
 """
 from collections.abc import Sequence
 from typing import Any
+
 from base_encoder import BaseCompressor, BaseDecoder, BaseEncoder
 
 
@@ -10,8 +11,8 @@ class LZ77Encoder(BaseEncoder):
     """
     The lz77 Encoder
 
-    Mathods:
-        encode(stream: Sequence): encodes the stream with lz77
+    Methods:
+        encode(stream: Sequence) -> Sequence: encodes the stream with lz77
     """
 
     def __init__(self, buffer_len: int = 128):
@@ -90,7 +91,7 @@ class LZ77Decoder(BaseDecoder):
     The LZ77 decoder class
 
     Methods:
-        decode(encoded_stream: Sequence) - decodes the lz77 code
+        decode(encoded_stream: Sequence) -> Sequence: decode the lz77 code
     """
 
     @staticmethod
