@@ -26,7 +26,7 @@ class HuffmannEncoder(BaseEncoder):
         encode(stream: Sequence) -> Sequence: encodes the stream with Huffmann Code
     """
 
-    def encode(self, stream: Sequence) -> Sequence:
+    def encode(self, stream: Sequence) -> list[int]:
         """
         Encode the given stream
 
@@ -41,11 +41,17 @@ class HuffmannEncoder(BaseEncoder):
         )
         tree: HuffmannTree = self.make_tree(nodes)
         self.alphabet: dict = self.encoding_from_tree(tree)
-        result = bytearray()
-        for symbol in stream:
-            result.append(self.alphabet[symbol])
+        # result = bytearray()
+        result = [0]
+        for symbol in reversed(stream):
+            # result.append(self.alphabet[symbol])
+            code = self.alphabet[symbol]
+            result[-1] = (result[-1] << code.bit_length()) | code
+            if result[-1].bit_length() >= 1024:
+                result.append(0)
         self.alphabet = {val: key for key, val in self.alphabet.items()}
-        return bytes(result)
+        # return bytes(result)
+        return list(reversed(result))
 
     @staticmethod
     def make_tree(nodes: list[tuple[Any, float]]) -> HuffmannTree:
@@ -61,7 +67,7 @@ class HuffmannEncoder(BaseEncoder):
         return nodes[0][0]
 
     def encoding_from_tree(
-        self, node: HuffmannTree | str, code: int = 0
+        self, node: HuffmannTree | str, code: int = 1
     ) -> dict[Any, int]:
         """
         Create an encoding for the given huffmann tree
@@ -69,8 +75,8 @@ class HuffmannEncoder(BaseEncoder):
         if isinstance(node, str):
             return {node: code}
         result = {}
-        result.update(self.encoding_from_tree(node.left, code << 1))
-        result.update(self.encoding_from_tree(node.right, (code << 1) | 1))
+        result.update(self.encoding_from_tree(node.left, code << 1 | 1))
+        result.update(self.encoding_from_tree(node.right, code << 1))
         return result
 
 
@@ -83,20 +89,28 @@ class HuffmannDecoder(BaseDecoder):
     """
 
     @staticmethod
-    def decode(encoded_stream: Sequence, alphabet: dict[int, Any]):
+    def decode(encoded_stream: list[int], alphabet: dict[int, Any]):
         """
         Decode the Huffmann code
         """
-        result = []
-        while encoded_stream:
-            for code, symbol in alphabet.items():
-                if encoded_stream[0] == code:
-                    result.append(symbol)
-                    encoded_stream = encoded_stream[1:]
-                    break
-            else:
-                break
+        # result = []
+        # while encoded_stream:
+        #     for code, symbol in alphabet.items():
+        #         if encoded_stream[0] == code:
+        #             result.append(symbol)
+        #             encoded_stream = encoded_stream[1:]
+        #             break
+        #     else:
+        #         break
 
+        result = []
+        for i in encoded_stream:
+            while i != 0:
+                for code, symbol in alphabet.items():
+                    if (i & ((1 << code.bit_length()) - 1)) == code:
+                        i = i >> (code.bit_length())
+                        result.append(symbol)
+                        break
         return result
 
 
@@ -114,7 +128,7 @@ class HuffmannCompressor(BaseCompressor):
         """
         self._encoder = HuffmannEncoder()
         self._decoder = HuffmannDecoder()
-        self._data = []
+        self._data: list[int] = []
 
     @property
     def data(self) -> Sequence:
