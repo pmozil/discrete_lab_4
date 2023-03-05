@@ -41,11 +41,11 @@ class HuffmannEncoder(BaseEncoder):
         )
         tree: HuffmannTree = self.make_tree(nodes)
         self.alphabet: dict = self.encoding_from_tree(tree)
-        result = ""
+        result = bytearray()
         for symbol in stream:
-            result += self.alphabet[symbol]
+            result.append(self.alphabet[symbol])
         self.alphabet = {val: key for key, val in self.alphabet.items()}
-        return result
+        return bytes(result)
 
     @staticmethod
     def make_tree(nodes: list[tuple[Any, float]]) -> HuffmannTree:
@@ -61,16 +61,16 @@ class HuffmannEncoder(BaseEncoder):
         return nodes[0][0]
 
     def encoding_from_tree(
-        self, node: HuffmannTree | str, code=""
-    ) -> dict[Any, str]:
+        self, node: HuffmannTree | str, code: int = 0
+    ) -> dict[Any, int]:
         """
         Create an encoding for the given huffmann tree
         """
         if isinstance(node, str):
             return {node: code}
         result = {}
-        result.update(self.encoding_from_tree(node.left, code + "0"))
-        result.update(self.encoding_from_tree(node.right, code + "1"))
+        result.update(self.encoding_from_tree(node.left, code << 1))
+        result.update(self.encoding_from_tree(node.right, (code << 1) | 1))
         return result
 
 
@@ -83,16 +83,16 @@ class HuffmannDecoder(BaseDecoder):
     """
 
     @staticmethod
-    def decode(encoded_stream: Sequence, alphabet: dict[str, Any]):
+    def decode(encoded_stream: Sequence, alphabet: dict[int, Any]):
         """
         Decode the Huffmann code
         """
         result = []
         while encoded_stream:
             for code, symbol in alphabet.items():
-                if encoded_stream[: len(code)] == code:
+                if encoded_stream[0] == code:
                     result.append(symbol)
-                    encoded_stream = encoded_stream[len(code) :]
+                    encoded_stream = encoded_stream[1:]
                     break
             else:
                 break

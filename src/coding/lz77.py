@@ -146,10 +146,10 @@ class LZ77Compressor(BaseCompressor):
         self._data = self._encoder.encode(data)
 
 
-import sys
+# import sys
 
-lz77 = LZ77Compressor(5)
-string = "AAAABCAABAABCD"
-lz77.data = string
-print(sys.getsizeof(lz77._data))
-print(sys.getsizeof(string))
+# lz77 = LZ77Compressor(5)
+# string = "AAAABCAABAABCD"
+# lz77.data = string
+# print(sys.getsizeof(lz77._data))
+# print(sys.getsizeof(string))
