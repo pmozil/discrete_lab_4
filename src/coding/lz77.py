@@ -61,12 +61,14 @@ class LZ77Encoder(BaseEncoder):
             if compression_info[1] > 0:
                 dist = compression_info[0] - len(self._buffer)
                 step = compression_info[1]
-                char = stream[step: step+1]
                 encoded_stream.append((dist, step))
             else:
                 step = 1
                 char = stream[0]
-                encoded_stream.append(char)
+                if encoded_stream and isinstance(encoded_stream[-1], str):
+                    encoded_stream[-1] += char
+                else:
+                    encoded_stream.append(char)                
             self._buffer += stream[: step]
             min_index = len(self._buffer) - self._buffer_len - 1 \
                 if len(self._buffer) > self._buffer_len\
@@ -92,9 +94,11 @@ class LZ77Decoder(BaseDecoder):
         decoded_stream = []
         for char in encoded_stream:
             if isinstance(char, tuple):
-                decoded_stream += decoded_stream[char[0]:][:char[1]] 
+                for ch in decoded_stream[char[0]:][:char[1]]:
+                    decoded_stream += [ch]
             else:
-                decoded_stream += [char] if char else []
+                for ch in (char if isinstance(char, str) else [char]):
+                    decoded_stream += ch
 
         return decoded_stream
 
@@ -131,8 +135,9 @@ class LZ77Compressor(BaseCompressor):
         """
         self._data = self._encoder.encode(data)
 
-# import sys
-# lz77 = LZ77Compressor(5)
-# lz77.data = string
-# print(sys.getsizeof(lz77._data))
-# print(sys.getsizeof(string))
+import sys
+lz77 = LZ77Compressor(5)
+string = "AAAABCAABAABCD"
+lz77.data = string
+print(sys.getsizeof(lz77._data))
+print(sys.getsizeof(string))
