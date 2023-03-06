@@ -4,13 +4,15 @@ The base encoder/decoder module
 It contains the ABC for the encoder class
 """
 
-from collections.abc import Sequence
 from abc import ABC, abstractmethod
+from collections.abc import Sequence
+
 
 class BaseEncoder(ABC):
     """
     The encoder abstract base class.
     """
+
     @abstractmethod
     def encode(self, stream: Sequence) -> Sequence:
         """
@@ -23,13 +25,14 @@ class BaseEncoder(ABC):
         """
         ...
 
+
 class BaseDecoder(ABC):
     """
     The decoder abstract base class
     """
-    @staticmethod
+
     @abstractmethod
-    def decode(stream: Sequence) -> Sequence:
+    def decode(self, stream: Sequence) -> Sequence:
         """
         Decode the data
 
@@ -40,10 +43,12 @@ class BaseDecoder(ABC):
         """
         ...
 
+
 class BaseCompressor(ABC):
     """
     The base compressor class
     """
+
     @property
     @abstractmethod
     def data(self) -> Sequence:

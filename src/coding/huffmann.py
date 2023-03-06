@@ -3,6 +3,8 @@ The Huffmann encoder/decoder module
 """
 from collections import Counter
 from collections.abc import Sequence
+from concurrent.futures import ThreadPoolExecutor
+from functools import partial
 from typing import Any
 
 from base_encoder import BaseCompressor, BaseDecoder, BaseEncoder
@@ -88,8 +90,7 @@ class HuffmannDecoder(BaseDecoder):
         decode(encoded_stream: Sequence, alphabet: dict[Any, str]) -> Sequence: decode the Huffmann code
     """
 
-    @staticmethod
-    def decode(encoded_stream: list[int], alphabet: dict[int, Any]):
+    def decode(self, encoded_stream: list[int], alphabet: dict[int, Any]):
         """
         Decode the Huffmann code
         """
@@ -104,13 +105,23 @@ class HuffmannDecoder(BaseDecoder):
         #         break
 
         result = []
-        for i in encoded_stream:
-            while i != 0:
-                for code, symbol in alphabet.items():
-                    if (i & ((1 << code.bit_length()) - 1)) == code:
-                        i = i >> (code.bit_length())
-                        result.append(symbol)
-                        break
+        with ThreadPoolExecutor(max_workers=10) as executor:
+            substrings = executor.map(
+                partial(self.decode_symbol, alphabet), encoded_stream
+            )
+        for substring in substrings:
+            result.extend(substring)
+        return result
+
+    @staticmethod
+    def decode_symbol(alphabet: dict[int, Any], i: int) -> list[Any]:
+        result = []
+        while i != 0:
+            for code, symbol in alphabet.items():
+                if (i & ((1 << code.bit_length()) - 1)) == code:
+                    i = i >> (code.bit_length())
+                    result.append(symbol)
+                    break
         return result
 
 
