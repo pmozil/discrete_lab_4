@@ -45,7 +45,7 @@ class HuffmannEncoder(BaseEncoder):
         self.alphabet: dict = self.encoding_from_tree(tree)
         # result = bytearray()
         result = [0]
-        for symbol in reversed(stream):
+        for symbol in stream[::-1]:
             # result.append(self.alphabet[symbol])
             code = self.alphabet[symbol]
             result[-1] = (result[-1] << code.bit_length()) | code
@@ -53,7 +53,7 @@ class HuffmannEncoder(BaseEncoder):
                 result.append(0)
         self.alphabet = {val: key for key, val in self.alphabet.items()}
         # return bytes(result)
-        return list(reversed(result))
+        return result[::-1]
 
     @staticmethod
     def make_tree(nodes: list[tuple[Any, float]]) -> HuffmannTree:
