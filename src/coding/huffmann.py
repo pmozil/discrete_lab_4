@@ -52,14 +52,16 @@ class HuffmannEncoder(BaseEncoder):
             result[-1] = code + result[-1]
             if len(result[-1]) >= 3600:
                 result.append("")
-        self.alphabet = {val: key for key, val in self.alphabet.items()}
+        self.alphabet = {
+            val.encode("utf-8"): key for key, val in self.alphabet.items()
+        }
         res = []
         for x in result:
             i = 0
             while i < len(x) - 1 and x[i] == "0":
                 i += 1
             res.append((i, int(x, base=2)))
-        return res
+        return res[::-1]
 
     @staticmethod
     def make_tree(nodes: list[tuple[Any, float]]) -> HuffmannTree:
@@ -96,11 +98,12 @@ class HuffmannDecoder(BaseDecoder):
         decode(encoded_stream: Sequence, alphabet: dict[Any, str]) -> Sequence: decode the Huffmann code
     """
 
-    def decode(self, encoded_stream: list[str], alphabet: dict[str, Any]):
+    def decode(self, encoded_stream: list[str], alp: dict[bytes, Any]):
         """
         Decode the Huffmann code
         """
         result = []
+        alphabet = {val.decode("utf-8"): key for val, key in alp.items()}
         with ThreadPoolExecutor(max_workers=10) as executor:
             substrings = executor.map(
                 partial(self.decode_symbol, alphabet), encoded_stream
@@ -142,7 +145,6 @@ class HuffmannCompressor(BaseCompressor):
         """
         Getter for the data
         """
-        print(self._encoder.alphabet)
         return self._decoder.decode(
             ["0" * x[0] + bin(x[1])[2:] for x in self._data],
             self._encoder.alphabet,
