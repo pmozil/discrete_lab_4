@@ -50,7 +50,7 @@ class HuffmannEncoder(BaseEncoder):
             # result.append(self.alphabet[symbol])
             code = self.alphabet[symbol]
             result[-1] = (result[-1] << code.bit_length()) | code
-            if result[-1].bit_length() >= 1024:
+            if result[-1].bit_length() >= 3600:
                 result.append(0)
         self.alphabet = {val: key for key, val in self.alphabet.items()}
         # return bytes(result)
