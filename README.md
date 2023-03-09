@@ -1,4 +1,4 @@
-# CXompression algorithms
+# Compression algorithms
 [![Open in Colaboratory](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/pmozil/discrete_lab_4/blob/main/report.ipynb)
 
 The code for the discrete mathematics lab.
