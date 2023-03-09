@@ -43,6 +43,7 @@ class DeflateEncoder(BaseEncoder):
         """Encode the stream"""
         result = self._huffmann.encode(self._lz77.encode(stream))
         self.alphabet = self._huffmann.alphabet
+        del self._huffmann.alphabet
         return result
 
 
