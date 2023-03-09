@@ -28,7 +28,7 @@ class HuffmannEncoder(BaseEncoder):
         encode(stream: Sequence) -> Sequence: encodes the stream with Huffmann Code
     """
 
-    def encode(self, stream: Sequence) -> list[int]:
+    def encode(self, stream: Sequence) -> list[tuple[int, int]]:
         """
         Encode the given stream
 
@@ -44,16 +44,22 @@ class HuffmannEncoder(BaseEncoder):
         tree: HuffmannTree = self.make_tree(nodes)
         self.alphabet: dict = self.encoding_from_tree(tree)
         # result = bytearray()
-        result = [0]
+        result = [""]
         for symbol in stream[::-1]:
             # result.append(self.alphabet[symbol])
             code = self.alphabet[symbol]
-            result[-1] = (result[-1] << code.bit_length()) | code
-            if result[-1].bit_length() >= 3600:
-                result.append(0)
+            # result[-1] = (result[-1] << code.bit_length()) | code
+            result[-1] = code + result[-1]
+            if len(result[-1]) >= 3600:
+                result.append("")
         self.alphabet = {val: key for key, val in self.alphabet.items()}
-        # return bytes(result)
-        return result[::-1]
+        res = []
+        for x in result:
+            i = 0
+            while i < len(x) - 1 and x[i] == "0":
+                i += 1
+            res.append((i, int(x, base=2)))
+        return res
 
     @staticmethod
     def make_tree(nodes: list[tuple[Any, float]]) -> HuffmannTree:
@@ -69,16 +75,16 @@ class HuffmannEncoder(BaseEncoder):
         return nodes[0][0]
 
     def encoding_from_tree(
-        self, node: HuffmannTree | str, code: int = 1
-    ) -> dict[Any, int]:
+        self, node: HuffmannTree | str, code: str = "0"
+    ) -> dict[Any, str]:
         """
         Create an encoding for the given huffmann tree
         """
         if not isinstance(node, HuffmannTree):
             return {node: code}
         result = {}
-        result.update(self.encoding_from_tree(node.left, code << 1 | 1))
-        result.update(self.encoding_from_tree(node.right, code << 1))
+        result.update(self.encoding_from_tree(node.left, code + "0"))
+        result.update(self.encoding_from_tree(node.right, code + "1"))
         return result
 
 
@@ -90,20 +96,10 @@ class HuffmannDecoder(BaseDecoder):
         decode(encoded_stream: Sequence, alphabet: dict[Any, str]) -> Sequence: decode the Huffmann code
     """
 
-    def decode(self, encoded_stream: list[int], alphabet: dict[int, Any]):
+    def decode(self, encoded_stream: list[str], alphabet: dict[str, Any]):
         """
         Decode the Huffmann code
         """
-        # result = []
-        # while encoded_stream:
-        #     for code, symbol in alphabet.items():
-        #         if encoded_stream[0] == code:
-        #             result.append(symbol)
-        #             encoded_stream = encoded_stream[1:]
-        #             break
-        #     else:
-        #         break
-
         result = []
         with ThreadPoolExecutor(max_workers=10) as executor:
             substrings = executor.map(
@@ -114,12 +110,12 @@ class HuffmannDecoder(BaseDecoder):
         return result
 
     @staticmethod
-    def decode_symbol(alphabet: dict[int, Any], i: int) -> list[Any]:
+    def decode_symbol(alphabet: dict[str, Any], i: str) -> list[Any]:
         result = []
-        while i != 0:
+        while i:
             for code, symbol in alphabet.items():
-                if (i & ((1 << code.bit_length()) - 1)) == code:
-                    i = i >> (code.bit_length())
+                if i.startswith(code):
+                    i = i[len(code) :]
                     result.append(symbol)
                     break
         return result
@@ -139,14 +135,18 @@ class HuffmannCompressor(BaseCompressor):
         """
         self._encoder = HuffmannEncoder()
         self._decoder = HuffmannDecoder()
-        self._data: list[int] = []
+        self._data: list[tuple[int, int]] = []
 
     @property
     def data(self) -> Sequence:
         """
         Getter for the data
         """
-        return self._decoder.decode(self._data, self._encoder.alphabet)
+        print(self._encoder.alphabet)
+        return self._decoder.decode(
+            ["0" * x[0] + bin(x[1])[2:] for x in self._data],
+            self._encoder.alphabet,
+        )
 
     @data.setter
     def data(self, stream: Sequence):
