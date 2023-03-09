@@ -67,14 +67,7 @@ class LZ77Encoder(BaseEncoder):
             else:
                 step = 1
                 symbol = stream[0]
-                if (
-                    encoded_stream
-                    and isinstance(encoded_stream[-1], Sequence)
-                    and not isinstance(encoded_stream[-1], tuple)
-                ):
-                    encoded_stream[-1] += symbol
-                else:
-                    encoded_stream.append(symbol)
+                encoded_stream.append(symbol)
             self._buffer += stream[:step]
             min_index = (
                 len(self._buffer) - self._buffer_len - 1
@@ -105,8 +98,7 @@ class LZ77Decoder(BaseDecoder):
                 for ch in decoded_stream[symbol[0] :][: symbol[1]]:
                     decoded_stream += [ch]
             else:
-                for ch in symbol if isinstance(symbol, Sequence) else [symbol]:
-                    decoded_stream += ch
+                decoded_stream.append(symbol)
 
         return decoded_stream
 

@@ -41,6 +41,7 @@ class HuffmannEncoder(BaseEncoder):
         nodes: list[tuple[Any, float]] = sorted(
             dict(Counter(stream)).items(), key=lambda x: x[1]
         )
+        print(nodes)
         tree: HuffmannTree = self.make_tree(nodes)
         self.alphabet: dict = self.encoding_from_tree(tree)
         # result = bytearray()
@@ -74,7 +75,7 @@ class HuffmannEncoder(BaseEncoder):
         """
         Create an encoding for the given huffmann tree
         """
-        if isinstance(node, str):
+        if not isinstance(node, HuffmannTree):
             return {node: code}
         result = {}
         result.update(self.encoding_from_tree(node.left, code << 1 | 1))
