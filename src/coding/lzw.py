@@ -9,8 +9,9 @@ Made by Dmytro Khamula & Petro Mozil.
 '''
 
 from typing import List
+from base_encoder import BaseCompressor, BaseDecoder, BaseEncoder
 
-class LZWEncoder:
+class LZWEncoder(BaseEncoder):
     '''
     Class of encoding data
 
@@ -24,17 +25,16 @@ class LZWEncoder:
         encode(): main function for encoding data.
         There are two arguments by default which shouldn't be changed.
     '''
-    def __init__(self, _data: str = '', _dict: dict = {chr(k): k for k in range(256)}) -> None:
+    def __init__(self, _dict: dict = {chr(k): k for k in range(256)}) -> None:
         '''
         (self, str, dict) -> None
 
         Initialization function for class LZWEncoder
         '''
-        self._data = _data
-        self._dict = {v: k for k, v in _dict.items()}
+        self._dict = _dict
         self._num = len(_dict)
 
-    def encode(self, elem: str = '', encoded_data: List = []) -> List[int]:
+    def encode(self, data, elem: str = '', encoded_data: List = []) -> List[int]:
         '''
         (self, str, List) -> List
 
@@ -42,7 +42,7 @@ class LZWEncoder:
         Returns:
             A list of integers which represent encoded data.
         '''
-        for char in self._data:
+        for char in data:
             new_code = elem + char
             if new_code in self._dict:
                 elem = new_code
@@ -58,7 +58,7 @@ class LZWEncoder:
         return encoded_data
 
 
-class LZWDecoder:
+class LZWDecoder(BaseDecoder):
     '''
     Class of decoding data
 
@@ -72,18 +72,17 @@ class LZWDecoder:
         decode(): main function for decoding data.
         There are two arguments by default which shouldn't be changed.
     '''
-    def __init__(self, _data: List = [], _dict: dict = {k: chr(k) for k in range(256)}) -> None:
+    def __init__(self, _dict: dict = {k: chr(k) for k in range(256)}) -> None:
         '''
         (self, str, dict) -> None
 
         Initialization function for class LZWDecoder
         '''
-        self._data = _data
         self._dict = _dict
         self._num = len(_dict)
 
 
-    def decode(self, elem: str = '', decoded_data: List = []) -> str:
+    def decode(self, data, elem: str = '', decoded_data: List = []) -> str:
         '''
         (self, str, List) -> List
 
@@ -91,7 +90,7 @@ class LZWDecoder:
         Returns:
             A string which represent decoded data.
         '''
-        for code in self._data:
+        for code in data:
             if code in self._dict:
                 entry = self._dict[code]
                 decoded_data.append(entry)
@@ -109,19 +108,19 @@ class LZWDecoder:
         return ''.join(decoded_data)
 
 
-class LZWCompressor:
+class LZWCompressor(BaseCompressor):
     '''
     LZW Compressor
     '''
-    def __init__(self, _data: str) -> None:
+    def __init__(self) -> None:
         '''
-        (self, str) -> None
+        (self) -> None
 
         Initialization function for LZWCompressor
         '''
         self._encoder = LZWEncoder()
         self._decoder = LZWDecoder()
-        self._data = _data
+        self._data = []
 
     @property
     def data(self):
@@ -134,37 +133,20 @@ class LZWCompressor:
         return self._decoder.decode(self._data)
 
     @data.setter
-    def data(self):
+    def data(self, data):
         '''
         Setter for the stored data
         '''
-        self._data = self._encoder.encode(self._data)
+        self._data = self._encoder.encode(data = data)
 
 
 
 if __name__ == '__main__':
-    # Small testing
-
-    # d = {
-    # 0: 'a',
-    # 1: 'b',
-    # 2: 'd',
-    # 3: 'n',
-    # 4: '_'
-    # }
-
-    # encoded_data = [1, 0, 3, 6, 0, 4, 5, 3, 2, 8]
-
-    # encoder = LZWEncoder('banana_bandana', d)
-    # decoder = LZWDecoder(encoded_data, d)
-
-    # print(decoder.decode())
-    # print(encoder.encode())
 
     import sys
 
-    string = 'AAAABCAABAABCD'
-    lzw = LZWCompressor(string)
-    res = lzw.data
-    print(f'Size of regular data: {sys.getsizeof(lzw._data)} bytes')
-    print(f'Size of encoded data: {sys.getsizeof(res)} bytes')
+    text = 'AAAABCAABAABCD'
+    lzw = LZWCompressor()
+    lzw.data = text
+    print(sys.getsizeof(lzw._data))
+    print(sys.getsizeof(text))
