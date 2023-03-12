@@ -4,6 +4,9 @@
 The code for the discrete mathematics lab.
 
 Work distribution:
+
 LZ77 - Petro Mozil
+
 LZW - Dmytro Khamula
-HUffmann and DEFLATE codes - Both participants
+
+Huffmann and DEFLATE codes - Both participants
