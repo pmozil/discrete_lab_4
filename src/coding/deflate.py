@@ -16,7 +16,7 @@ class DeflateEncoder(BaseEncoder):
     This is bonkers. Am not putting multiple symbols into one byte, not in python.
     This is a demonstration of what deflate should look like, but with proper tools
     it'd be twice, if not thrice as effective. I, however, am too lazy to implement an
-    array that writes data withon concern for byte boundaries, on instread of
+    array that writes data without concern for byte boundaries, on instead of
     +==========+==========+
     | 10101001 | 10100000 |
     +==========+==========+
@@ -39,11 +39,10 @@ class DeflateEncoder(BaseEncoder):
         self._huffmann = HuffmannEncoder()
         self._lz77 = LZ77Encoder(buf_size)
 
-    def encode(self, stream: Sequence) -> list[int]:
+    def encode(self, stream: Sequence) -> list:
         """Encode the stream"""
         result = self._huffmann.encode(self._lz77.encode(stream))
         self.alphabet = self._huffmann.alphabet
-        del self._huffmann.alphabet
         return result
 
 
@@ -58,7 +57,7 @@ class DeflateDecoder(BaseDecoder):
         self._lz77 = LZ77Decoder()
 
     def decode(
-        self, encoded_stream: list[int], alphabet: dict[int, Any]
+        self, encoded_stream: list[str], alphabet: dict[bytes, Any]
     ) -> Sequence:
         """Decode the stream"""
         return self._lz77.decode(
@@ -73,13 +72,15 @@ class DeflateCompressor:
         """Init for the class"""
         self._encoder = DeflateEncoder(buf_size)
         self._decoder = DeflateDecoder()
-        self._data: list[int] = []
-        self.alphabet: dict[int, Any] = {}
+        self._data: list[str] = []
+        self.alphabet: dict[bytes, Any] = {}
 
     @property
     def data(self) -> Sequence:
         """Get the data"""
-        return self._decoder.decode(self._data, self.alphabet)
+        return self._decoder.decode(
+            ["0" * x[0] + bin(x[1])[2:] for x in self._data], self.alphabet
+        )
 
     @data.setter
     def data(self, data: Sequence):
