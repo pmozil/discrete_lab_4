@@ -1,6 +1,7 @@
 """
 The Huffmann encoder/decoder module
 """
+import heapq
 from collections import Counter
 from collections.abc import Sequence
 from concurrent.futures import ThreadPoolExecutor
@@ -8,16 +9,6 @@ from functools import partial
 from typing import Any
 
 from base_encoder import BaseCompressor, BaseDecoder, BaseEncoder
-
-
-class HuffmannTree:
-    """
-    The Huffmann Tree node
-    """
-
-    def __init__(self, left: "HuffmannTree | str", right: "HuffmannTree | str"):
-        self.left = left
-        self.right = right
 
 
 class HuffmannEncoder(BaseEncoder):
@@ -38,11 +29,7 @@ class HuffmannEncoder(BaseEncoder):
         Returns:
             Sequence - the encoded data
         """
-        nodes: list[tuple[Any, float]] = sorted(
-            dict(Counter(stream)).items(), key=lambda x: x[1]
-        )
-        tree: HuffmannTree = self.make_tree(nodes)
-        self.alphabet: dict = self.encoding_from_tree(tree)
+        self.alphabet: dict = self.make_alphabet(Counter(stream))
         # result = bytearray()
         result = [""]
         for symbol in stream[::-1]:
@@ -65,30 +52,25 @@ class HuffmannEncoder(BaseEncoder):
         return res[::-1]
 
     @staticmethod
-    def make_tree(nodes: list[tuple[Any, float]]) -> HuffmannTree:
+    def make_alphabet(counter: dict[Any, int]) -> dict[str, Any]:
         """
-        Make a huffmann tree from
+        Make the alphabet from the given frequencies
         """
-        while len(nodes) > 1:
-            (sym_1, freq_1) = nodes[0]
-            (sym_2, freq_2) = nodes[1]
-            nodes = nodes[2:]
-            node = HuffmannTree(sym_1, sym_2)
-            nodes.append((node, freq_1 + freq_2))
-        return nodes[0][0]
-
-    def encoding_from_tree(
-        self, node: HuffmannTree | str, code: str = "0"
-    ) -> dict[Any, str]:
-        """
-        Create an encoding for the given huffmann tree
-        """
-        if not isinstance(node, HuffmannTree):
-            return {node: code}
         result = {}
-        result.update(self.encoding_from_tree(node.left, code + "0"))
-        result.update(self.encoding_from_tree(node.right, code + "1"))
-        return result
+        freq_tree = [[freq, [symbol, ""]] for symbol, freq in counter.items()]
+        heapq.heapify(freq_tree)
+        while len(freq_tree) > 1:
+            low = heapq.heappop(freq_tree)
+
+            high = heapq.heappop(freq_tree)
+            for val in low[1:]:
+                val[1] = "0" + val[1]
+
+            for val in high[1:]:
+                val[1] = "1" + val[1]
+
+            heapq.heappush(freq_tree, [low[0] + high[0]] + low[1:] + high[1:])
+        return dict(tuple(x) for x in freq_tree[0][1:])
 
 
 class HuffmannDecoder(BaseDecoder):
