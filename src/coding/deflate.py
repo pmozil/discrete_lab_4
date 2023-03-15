@@ -72,14 +72,15 @@ class DeflateCompressor:
         """Init for the class"""
         self._encoder = DeflateEncoder(buf_size)
         self._decoder = DeflateDecoder()
-        self._data: list[str] = []
+        self._data: list[tuple[int, int]] = []
         self.alphabet: dict[bytes, Any] = {}
 
     @property
     def data(self) -> Sequence:
         """Get the data"""
         return self._decoder.decode(
-            ["0" * x[0] + bin(x[1])[2:] for x in self._data], self.alphabet
+            ["0" * x[0] + bin(x[1])[2:] for x in self._data],
+            self.alphabet,
         )
 
     @data.setter

@@ -49,9 +49,10 @@ class HuffmannEncoder(BaseEncoder):
             # result.append(self.alphabet[symbol])
             code = self.alphabet[symbol]
             # result[-1] = (result[-1] << code.bit_length()) | code
-            result[-1] = code + result[-1]
-            if len(result[-1]) >= 3600:
+            if len(result[-1]) + len(code) > 1024:
+                result[-1] = result[-1]
                 result.append("")
+            result[-1] = code + result[-1]
         self.alphabet = {
             val.encode("utf-8"): key for key, val in self.alphabet.items()
         }
